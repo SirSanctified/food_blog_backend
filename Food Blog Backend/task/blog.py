@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Error
+from sys import argv
 
 
 def create_connection(db_file: str) -> sqlite3.Connection:
@@ -31,6 +32,7 @@ def create_table(connection, create_table_query):
 
 
 def main():
+    db_file = argv[1] if len(argv) > 1 else 'food_blog.db'
     data = {"meals": ("breakfast", "brunch", "lunch", "supper"),
             "ingredients": ("milk", "cacao", "strawberry", "blueberry", "blackberry", "sugar"),
             "measures": ("ml", "g", "l", "cup", "tbsp", "tsp", "dsp", "")}
@@ -53,11 +55,18 @@ VALUES(?)'''
     VALUES(?)'''
     measures_insert_query = '''INSERT INTO measures (measure_name)
     VALUES(?)'''
+    recipe_table_query = '''CREATE TABLE IF NOT EXISTS recipes(
+    recipe_id int PRIMARY KEY,
+    recipe_name text NOT NULL,
+    recipe_description text);'''
+    recipe_insert_query = '''INSERT INTO recipes (recipe_name, recipe_description)
+    VALUES(?, ?)'''
 
-    conn = create_connection('food_blog.db')
+    conn = create_connection(db_file)
     create_table(conn, meals_table_query)
     create_table(conn, ingredients_table_query)
     create_table(conn, measures_table_query)
+    create_table(conn, recipe_table_query)
 
     cursor = conn.cursor()
 
@@ -69,6 +78,15 @@ VALUES(?)'''
 
     for measure in data['measures']:
         cursor.execute(measures_insert_query, (measure,))
+
+    conn.commit()
+    print('Pass the empty recipe name to exit.')
+    recipe_name = input('Recipe name:')
+
+    while recipe_name:
+        recipe_description = input('Recipe description:\t')
+        cursor.execute(recipe_insert_query, (recipe_name, recipe_description,))
+        recipe_name = input('Recipe name:')
 
     conn.commit()
 
